@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Product Quality Inspector</title>
+
+
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 0;
+        }
+
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+            margin: 40px auto;
+        }
+
+
+        h1 {
+            text-align: center;
+            color: #222;
+        }
+
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+
+        .upload-area {
+            text-align: center;
+            padding: 30px;
+            border: 2px dashed #aaa;
+            border-radius: 10px;
+        }
+
+
+        input[type="file"] {
+            margin: 20px 0;
+        }
+
+
+        #preview {
+            max-width: 400px;
+            max-height: 300px;
+            display: none;
+            margin: 20px auto;
+            border-radius: 8px;
+        }
+
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+
+        button:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+
+
+        button:hover:not(:disabled) {
+            background: #1d4ed8;
+        }
+
+
+        #loading {
+            display: none;
+            text-align: center;
+            margin: 20px;
+            color: #555;
+        }
+
+
+        #result {
+            display: none;
+        }
+
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 22px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+
+        .pass {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+
+        .fail {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+
+        .manual {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+
+        .section {
+            margin-top: 18px;
+        }
+
+
+        .section h3 {
+            margin-bottom: 8px;
+        }
+
+
+        .box {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 6px;
+            white-space: pre-wrap;
+        }
+
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <h1>Product Quality Inspector</h1>
+
+    <p class="subtitle">
+        AI-powered visual product quality inspection
+    </p>
+
+
+    <!-- UPLOAD -->
+
+    <div class="card">
+
+        <div class="upload-area">
+
+            <h2>Select Product Image</h2>
+
+            <p>
+                Choose an image of the product you want to inspect.
+            </p>
+
+
+            <input
+                type="file"
+                id="imageInput"
+                accept="image/png,image/jpeg,image/jpg"
+            >
+
+
+            <br>
+
+
+            <img
+                id="preview"
+                alt="Product Preview"
+            >
+
+
+            <br>
+
+
+            <button
+                id="inspectButton"
+                disabled
+            >
+                Inspect Product
+            </button>
+
+
+        </div>
+
+    </div>
+
+
+    <!-- LOADING -->
+
+    <div
+        id="loading"
+        class="card"
+    >
+
+        <h3>
+            Inspecting product...
+        </h3>
+
+        <p>
+            Microsoft Foundry is analyzing the image.
+        </p>
+
+    </div>
+
+
+    <!-- ERROR -->
+
+    <div
+        id="error"
+        class="error"
+    ></div>
+
+
+    <!-- RESULT -->
+
+    <div
+        id="result"
+        class="card"
+    >
+
+        <div
+            id="status"
+            class="status"
+        ></div>
+
+
+        <div class="section">
+
+            <h3>
+                Detected Defects
+            </h3>
+
+            <div
+                id="defects"
+                class="box"
+            ></div>
+
+        </div>
+
+
+        <div class="section">
+
+            <h3>
+                Confidence
+            </h3>
+
+            <div
+                id="confidence"
+                class="box"
+            ></div>
+
+        </div>
+
+
+        <div class="section">
+
+            <h3>
+                Explanation
+            </h3>
+
+            <div
+                id="explanation"
+                class="box"
+            ></div>
+
+        </div>
+
+
+        <div class="section">
+
+            <h3>
+                Recommended Action
+            </h3>
+
+            <div
+                id="action"
+                class="box"
+            ></div>
+
+        </div>
+
+
+        <div class="section">
+
+            <h3>
+                Complete AI Report
+            </h3>
+
+            <div
+                id="raw"
+                class="box"
+            ></div>
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+
+const imageInput =
+    document.getElementById("imageInput");
+
+
+const preview =
+    document.getElementById("preview");
+
+
+const inspectButton =
+    document.getElementById("inspectButton");
+
+
+const loading =
+    document.getElementById("loading");
+
+
+const result =
+    document.getElementById("result");
+
+
+const errorBox =
+    document.getElementById("error");
+
+
+let selectedImage = null;
+
+
+
+// ------------------------------------------------
+// SELECT IMAGE
+// ------------------------------------------------
+
+imageInput.addEventListener(
+    "change",
+    function () {
+
+        const file = this.files[0];
+
+
+        if (!file) {
+
+            return;
+
+        }
+
+
+        selectedImage = file;
+
+
+        // Show preview
+
+        const reader =
+            new FileReader();
+
+
+        reader.onload =
+            function (event) {
+
+                preview.src =
+                    event.target.result;
+
+                preview.style.display =
+                    "block";
+
+            };
+
+
+        reader.readAsDataURL(file);
+
+
+        // Enable button
+
+        inspectButton.disabled =
+            false;
+
+    }
+);
+
+
+
+// ------------------------------------------------
+// INSPECT BUTTON
+// ------------------------------------------------
+
+inspectButton.addEventListener(
+    "click",
+    async function () {
+
+
+        if (!selectedImage) {
+
+            alert("Please select an image.");
+
+            return;
+
+        }
+
+
+        // Hide previous result
+
+        result.style.display =
+            "none";
+
+        errorBox.style.display =
+            "none";
+
+
+        // Show loading
+
+        loading.style.display =
+            "block";
+
+
+        inspectButton.disabled =
+            true;
+
+
+        // Create form
+
+        const formData =
+            new FormData();
+
+
+        formData.append(
+            "image",
+            selectedImage
+        );
+
+
+        try {
+
+
+            // Send image to Flask
+
+            const response =
+                await fetch(
+                    "/api/inspect",
+                    {
+                        method: "POST",
+                        body: formData
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            console.log(data);
+
+
+            if (!data.success) {
+
+                throw new Error(
+                    data.details ||
+                    data.error ||
+                    "Inspection failed."
+                );
+
+            }
+
+
+            // Show result
+
+            showResult(
+                data.result
+            );
+
+
+        }
+        catch (error) {
+
+
+            console.error(error);
+
+
+            errorBox.textContent =
+                error.message;
+
+
+            errorBox.style.display =
+                "block";
+
+
+        }
+        finally {
+
+
+            loading.style.display =
+                "none";
+
+
+            inspectButton.disabled =
+                false;
+
+        }
+
+    }
+);
+
+
+
+// ------------------------------------------------
+// SHOW RESULT
+// ------------------------------------------------
+
+function showResult(text) {
+
+
+    result.style.display =
+        "block";
+
+
+    document.getElementById(
+        "raw"
+    ).textContent = text;
+
+
+    // Status
+
+    const statusMatch =
+        text.match(
+            /Quality Status:\s*(.*)/i
+        );
+
+
+    const status =
+        statusMatch
+            ? statusMatch[1].trim()
+            : "UNKNOWN";
+
+
+    const statusElement =
+        document.getElementById(
+            "status"
+        );
+
+
+    statusElement.textContent =
+        status;
+
+
+    statusElement.className =
+        "status";
+
+
+    if (
+        status.toUpperCase()
+        .includes("PASS")
+    ) {
+
+        statusElement.classList.add(
+            "pass"
+        );
+
+    }
+    else if (
+        status.toUpperCase()
+        .includes("FAIL")
+    ) {
+
+        statusElement.classList.add(
+            "fail"
+        );
+
+    }
+    else {
+
+        statusElement.classList.add(
+            "manual"
+        );
+
+    }
+
+
+    // Defects
+
+    const defectMatch =
+        text.match(
+            /Detected Defects:\s*([\s\S]*?)(?=\n\s*Confidence:)/i
+        );
+
+
+    document.getElementById(
+        "defects"
+    ).textContent =
+        defectMatch
+            ? defectMatch[1].trim()
+            : "Not available";
+
+
+    // Confidence
+
+    const confidenceMatch =
+        text.match(
+            /Confidence:\s*(.*)/i
+        );
+
+
+    document.getElementById(
+        "confidence"
+    ).textContent =
+        confidenceMatch
+            ? confidenceMatch[1].trim()
+            : "Not available";
+
+
+    // Explanation
+
+    const explanationMatch =
+        text.match(
+            /Explanation:\s*([\s\S]*?)(?=\n\s*Recommended Action:)/i
+        );
+
+
+    document.getElementById(
+        "explanation"
+    ).textContent =
+        explanationMatch
+            ? explanationMatch[1].trim()
+            : "Not available";
+
+
+    // Action
+
+    const actionMatch =
+        text.match(
+            /Recommended Action:\s*([\s\S]*)/i
+        );
+
+
+    document.getElementById(
+        "action"
+    ).textContent =
+        actionMatch
+            ? actionMatch[1].trim()
+            : "Not available";
+
+}
+
+</script>
+
+
+</body>
+
+</html>
